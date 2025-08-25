@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+if ! git verify-commit HEAD; then
+	echo "$(git --no-pager log -1 --oneline HEAD) isn't signed"
+	echo "Signing..."
+	git commit -S --amend
+else
+	echo "$(git --no-pager log -1 --oneline HEAD) is signed :)"
+fi

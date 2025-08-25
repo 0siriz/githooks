@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+# Put into the directory specified by core.hooksPath or just `.git/hooks/`
+# Then symlink each hookname to this script
+# Hooks go in `HOOKNAME.d/` e.g. `pre-commit.d/00-hook1`, order is (from the location of this script)
+# - ./HOOKNAME.d/*
+# - $GIT_CUSTOM_HOOKS_DIR/HOOKNAME.d/*
+# - $GIT_DIR/hooks/HOOKNAME.d/*
+# - $GIT_DIR/hooks/HOOKNAME
+
+set -eEu -o pipefail
+shopt -s inherit_errexit
+
+# optional debug output by TRACE=1
+[[ "${TRACE:-0}" == "1" ]] && set -o xtrace
+IFS=$'\n\t'
+PS4='+\t '
+
+error_handler() { echo "Error: In ${BASH_SOURCE[0]} Line ${1} exited with Status ${2}"; }
+trap 'error_handler ${LINENO} $?' ERR
+
+STDIN=$(cat)
+
+[[ -n "${GIT_DIR:-}" ]] && git_dir="$GIT_DIR"
+unset $(git rev-parse --local-env-vars || true)
+GIT_DIR="$(git rev-parse --git-dir 2>/dev/null)" || GIT_DIR="$git_dir"
+export GIT_DIR
+[[ -n "${git_dir:-}" ]] && unset git_dir
+
+declare -a HOOKDIRS
+HOOKDIRS+=("$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
+[[ -n "${GIT_CUSTOM_HOOKS_DIR:-}" ]] && HOOKDIRS+=("$GIT_CUSTOM_HOOKS_DIR")
+HOOKDIRS+=("$GIT_DIR/hooks")
+
+HOOKNAME=$(basename "${BASH_SOURCE[0]}")
+
+# Run first hooks in $GIT_DIR as usual (unless that is us)
+hookscript="${GIT_DIR}/hooks/${HOOKNAME}"
+if [[ -f "$hookscript" && -x "$hookscript" && ! "$hookscript" -ef "${BASH_SOURCE[0]}" ]]; then
+	echo -e "\e[1;35m##### GITHOOK: ${hookscript}\e[0m"
+	echo "$STDIN" | "$hookscript" "$@" || exit $?
+fi
+
+declare -A TO_RUN
+
+for dir in "${HOOKDIRS[@]}"; do
+	hookdir="${dir}/${HOOKNAME}.d"
+	if [[ -d "$hookdir" ]]; then
+		for hook in "$hookdir"/*; do
+			hookname="$(basename "$hook")"
+			TO_RUN[$hookname]="$hook"
+		done
+	fi
+done
+
+for key in "${!TO_RUN[@]}"; do
+	echo "$key"
+done | sort | while read -r hookname; do
+hookscript="${TO_RUN[$hookname]}"
+if [[ -f "$hookscript" && -x "$hookscript" ]]; then
+	echo -e "\e[1;35m##### GITHOOK: ${hookscript}\e[0m"
+	echo "$STDIN" | "$hookscript" "$@" || exit $?
+fi
+done
