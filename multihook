@@ -62,3 +62,5 @@ if [[ -f "$hookscript" && -x "$hookscript" ]]; then
 	echo "$STDIN" | "$hookscript" "$@" || exit $?
 fi
 done
+
+echo -e "\e[1;32m##### ALL $(echo "${HOOKNAME}" | tr '[:lower:]' '[:upper:]') HOOKS DONE\e[0m"

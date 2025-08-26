@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+if ! git verify-commit HEAD >/dev/null 2>&1; then
+	echo -e "\e[0;31mCommit '$(git --no-pager log -1 --format=format:"%h %s" HEAD)' isn't signed\e[0m"
+	echo "Signing..."
+	git commit -S --amend || exit $?
+else
+	echo -e "\e[0;32mCommit '$(git --no-pager log -1 --format=format:"%h %s" HEAD)' is signed\e[0m"
+fi
