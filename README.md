@@ -22,4 +22,4 @@ cp -r /tmp/githooks/* .git/hooks/
 - `pre-commit.d/00-gitleaks` requires the [gitleaks](https://github.com/gitleaks/gitleaks) utility is installed
 
 ## Notes
-I like having my commits signed, and so `post-commit.d/99-ensure-signed` and `post-rewrite.d/99-ensure-signed` will force commit signature, if you dont want this then you are welcome to delete them
+I like having my commits signed, and so `post-commit.d/99-warn-unsigned` and `post-rewrite.d/99-warn-unsigned` will warn of missing commit signature, if you dont want this then you are welcome to delete them

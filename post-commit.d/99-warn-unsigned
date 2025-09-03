@@ -6,8 +6,9 @@ RESET="\e[0m"
 
 if ! git verify-commit HEAD >/dev/null 2>&1; then
 	echo -e "${RED}Commit '$(git --no-pager log -1 --format=format:"%h %s" HEAD)' isn't signed${RESET}"
-	echo "Signing..."
-	git commit -S --amend -C HEAD --no-verify --no-post-rewrite || exit $?
+	echo "Please amend the commit to be signed:"
+	echo ""
+	echo "    git commit -S --amend"
 else
 	echo -e "${GREEN}Commit '$(git --no-pager log -1 --format=format:"%h %s" HEAD)' is signed${RESET}"
 fi
