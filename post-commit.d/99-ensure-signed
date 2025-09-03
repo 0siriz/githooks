@@ -1,1 +1,13 @@
-../scripts/ensure-signed
+#!/usr/bin/env bash
+
+RED="\e[31m"
+GREEN="\e[32m"
+RESET="\e[0m"
+
+if ! git verify-commit HEAD >/dev/null 2>&1; then
+	echo -e "${RED}Commit '$(git --no-pager log -1 --format=format:"%h %s" HEAD)' isn't signed${RESET}"
+	echo "Signing..."
+	git commit -S --amend || exit $?
+else
+	echo -e "${GREEN}Commit '$(git --no-pager log -1 --format=format:"%h %s" HEAD)' is signed${RESET}"
+fi

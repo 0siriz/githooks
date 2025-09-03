@@ -3,20 +3,26 @@
 # Put into the directory specified by core.hooksPath or just `.git/hooks/`
 # Then symlink each hookname to this script
 # Hooks go in `HOOKNAME.d/` e.g. `pre-commit.d/00-hook1`, order is (from the location of this script)
-# - ./HOOKNAME.d/*
-# - $GIT_CUSTOM_HOOKS_DIR/HOOKNAME.d/*
-# - $GIT_DIR/hooks/HOOKNAME.d/*
 # - $GIT_DIR/hooks/HOOKNAME
+# - $GIT_DIR/hooks/HOOKNAME.d/*
+# - $GIT_CUSTOM_HOOKS_DIR/HOOKNAME.d/*
+# - ./HOOKNAME.d/*
 
 set -eEu -o pipefail
 shopt -s inherit_errexit
+
+BOLD="\e[1m"
+RED="\e[31m"
+GREEN="\e[32m"
+PURPLE="\e[35m"
+RESET="\e[0m"
 
 # optional debug output by TRACE=1
 [[ "${TRACE:-0}" == "1" ]] && set -o xtrace
 IFS=$'\n\t'
 PS4='+\t '
 
-error_handler() { echo "Error: In ${BASH_SOURCE[0]} Line ${1} exited with Status ${2}"; }
+error_handler() { echo "${RED}Error: In ${BASH_SOURCE[0]} Line ${1} exited with Status ${2}${RESET}" >&2; }
 trap 'error_handler ${LINENO} $?' ERR
 
 STDIN=$(cat)
@@ -37,8 +43,9 @@ HOOKNAME=$(basename "${BASH_SOURCE[0]}")
 # Run first hooks in $GIT_DIR as usual (unless that is us)
 hookscript="${GIT_DIR}/hooks/${HOOKNAME}"
 if [[ -f "$hookscript" && -x "$hookscript" && ! "$hookscript" -ef "${BASH_SOURCE[0]}" ]]; then
-	echo -e "\e[1;35m##### GITHOOK: ${hookscript}\e[0m"
+	echo -e "${BOLD}${PURPLE}##### GITHOOK: $(echo "${hookscript}" | sed "s|^${HOME}|~|")${RESET}"
 	echo "$STDIN" | "$hookscript" "$@" || exit $?
+	echo ""
 fi
 
 declare -A TO_RUN
@@ -58,9 +65,10 @@ for key in "${!TO_RUN[@]}"; do
 done | sort | while read -r hookname; do
 hookscript="${TO_RUN[$hookname]}"
 if [[ -f "$hookscript" && -x "$hookscript" ]]; then
-	echo -e "\e[1;35m##### GITHOOK: ${hookscript}\e[0m"
+	echo -e "${BOLD}${PURPLE}##### GITHOOK: $(echo "${hookscript}" | sed "s|^${HOME}|~|")${RESET}"
 	echo "$STDIN" | "$hookscript" "$@" || exit $?
+	echo ""
 fi
 done
 
-echo -e "\e[1;32m##### ALL $(echo "${HOOKNAME}" | tr '[:lower:]' '[:upper:]') HOOKS DONE\e[0m"
+echo -e "${BOLD}${GREEN}##### ALL $(echo "${HOOKNAME}" | tr '[:lower:]' '[:upper:]') HOOKS DONE${RESET}\n"
