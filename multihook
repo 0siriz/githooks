@@ -14,7 +14,8 @@ shopt -s inherit_errexit
 BOLD="\e[1m"
 RED="\e[31m"
 GREEN="\e[32m"
-PURPLE="\e[35m"
+MAGENTA="\e[35m"
+CYAN="\e[36m"
 RESET="\e[0m"
 
 # optional debug output by TRACE=1
@@ -40,10 +41,12 @@ HOOKDIRS+=("$GIT_DIR/hooks")
 
 HOOKNAME=$(basename "${BASH_SOURCE[0]}")
 
+echo -e "${BOLD}${CYAN}##### RUNNING $(echo "${HOOKNAME}" | tr '[:lower:]' '[:upper:]') HOOKS ${RESET}\n"
+
 # Run first hooks in $GIT_DIR as usual (unless that is us)
 hookscript="${GIT_DIR}/hooks/${HOOKNAME}"
 if [[ -f "$hookscript" && -x "$hookscript" && ! "$hookscript" -ef "${BASH_SOURCE[0]}" ]]; then
-	echo -e "${BOLD}${PURPLE}##### GITHOOK: $(echo "${hookscript}" | sed "s|^${HOME}|~|")${RESET}"
+	echo -e "${BOLD}${MAGENTA}##### GITHOOK: $(echo "${hookscript}" | sed "s|^${HOME}|~|")${RESET}"
 	echo "$STDIN" | "$hookscript" "$@" || exit $?
 	echo ""
 fi
@@ -65,7 +68,7 @@ for key in "${!TO_RUN[@]}"; do
 done | sort | while read -r hookname; do
 hookscript="${TO_RUN[$hookname]}"
 if [[ -f "$hookscript" && -x "$hookscript" ]]; then
-	echo -e "${BOLD}${PURPLE}##### GITHOOK: $(echo "${hookscript}" | sed "s|^${HOME}|~|")${RESET}"
+	echo -e "${BOLD}${MAGENTA}##### GITHOOK: $(echo "${hookscript}" | sed "s|^${HOME}|~|")${RESET}"
 	echo "$STDIN" | "$hookscript" "$@" || exit $?
 	echo ""
 fi
