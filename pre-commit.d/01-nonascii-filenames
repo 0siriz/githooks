@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+RED="\e[31m"
+GREEN="\e[32m"
+YELLOW="\e[33m"
+RESET="\e[0m"
+
+allownonascii=$(git config --type=bool hooks.allownonascii)
+
+if [[ "$allownonascii" == "true" ]]; then
+	echo -e "${YELLOW}Warning: this check is disabled.${RESET}"
+	echo ""
+	echo -e "${YELLOW}So non-ASCII file names are allowed.${RESET}"
+	echo ""
+	echo -e "${YELLOW}You can enable this check using:${RESET}"
+	echo ""
+	echo -e "${YELLOW}  git config hooks.allownonascii false${RESET}"
+	exit 0
+fi
+
+if git rev-parse --verify HEAD >/dev/null 2>&1; then
+	against=HEAD
+else
+	against=$(git hash-object -t tree /dev/null)
+fi
+
+if [[ "$allownonascii" != "true" ]] && test $(git diff-index --cached --name-only --diff-filter=A -z $against | LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0; then
+	echo -e "${RED}Error: Attempt to add a non-ASCII file name.${RESET}"
+	echo ""
+	echo -e "${RED}This can cause problems if you want to work with people on other platforms.${RESET}"
+	echo ""
+	echo -e "${RED}To be portable it is advisable to rename the file.${RESET}"
+	echo ""
+	echo -e "${RED}If you know what you are doing you can disable this check using:${RESET}"
+	echo ""
+	echo -e "${RED}  git config hooks.allownonascii true${RESET}"
+	exit 1
+else
+	echo -e "${GREEN}No non-ASCII file names found${RESET}"
+fi
