@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+RED="\e[31m"
+GREEN="\e[32m"
+RESET="\e[0m"
+
+if ! git --no-pager diff --cached --check >/dev/null 2>&1; then
+	echo -e "${RED}Found issues in the diff:${RESET}"
+	git --no-pager diff --cached --check
+
+	echo -e "\n${RED}Please fix issues before committing${RESET}"
+	exit 1
+else
+	echo -e "${GREEN}Diff is clean${RESET}"
+fi

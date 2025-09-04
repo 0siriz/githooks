@@ -23,9 +23,6 @@ RESET="\e[0m"
 IFS=$'\n\t'
 PS4='+\t '
 
-error_handler() { echo "${RED}Error: In ${BASH_SOURCE[0]} Line ${1} exited with Status ${2}${RESET}" >&2; }
-trap 'error_handler ${LINENO} $?' ERR
-
 STDIN=$(cat)
 
 [[ -n "${GIT_DIR:-}" ]] && git_dir="$GIT_DIR"
