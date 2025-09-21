@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
+BOLD="\e[1m"
+RED="\e[31m"
+RESET="\e[0m"
+
 if ! command -v gitleaks >/dev/null 2>&1; then
-	echo -e "\e[1mIt looks like you don't have \e[31mgitleaks\e[0;1m installed!\e[0m"
+	echo -e "${BOLD}It looks like you don't have ${RED}gitleaks${RESET}${BOLD} installed!${RESET}"
 	echo
 	echo "You have a hook installed that uses gitleaks to scan for"
 	echo "accidentally committed secrets. You can install gitleaks by either"
