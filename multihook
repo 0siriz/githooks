@@ -61,14 +61,12 @@ for dir in "${HOOKDIRS[@]}"; do
 	fi
 done
 
-i=0
 for key in "${!TO_RUN[@]}"; do
 	echo "$key"
 done | sort | while read -r hookname; do
 hookscript="${TO_RUN[$hookname]}"
 if [[ -f "$hookscript" && -x "$hookscript" ]]; then
-	i=$((i+1))
-	echo -e "${BOLD}${MAGENTA}##### ${i}/${#TO_RUN[@]} GITHOOK: $(echo "${hookscript}" | sed "s|^${HOME}|~|")${RESET}"
+	echo -e "${BOLD}${MAGENTA}##### GITHOOK: $(echo "${hookscript}" | sed "s|^${HOME}|~|")${RESET}"
 	echo "$STDIN" | "$hookscript" "$@" || exit $?
 	echo ""
 fi
