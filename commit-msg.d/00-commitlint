@@ -22,14 +22,36 @@ if ! command -v jq >/dev/null 2>&1; then
 	echo "or downloading it from github:"
 	echo
 	echo "    https://github.com/jqlang/jq/releases/latest"
+	echo
 
 	exit 1
 fi
 
-TYPES_REGEX=$(jq -r '.types | join("|")' "$CONFIG_FILE")
-REGEX="^(${TYPES_REGEX})(\\(.+\\))?!?: .+"
+TYPES_REGEX=$(jq -r 'if has("types") then .types | join("|") else "" end' "$CONFIG_FILE")
+SCOPES_REGEX=$(jq -r 'if has("scopes") then .scopes | join("|") else "" end' "$CONFIG_FILE")
+REVERT=$(jq -r 'if has("revert") then .revert else false end' "$CONFIG_FILE")
 
-if ! echo "$COMMIT_MSG" | grep -Eq "$REGEX"; then
+if [[ -z $TYPES_REGEX ]]; then
+	echo -e "${RED}No/malformed types in config file${RESET}"
+
+	exit 1
+fi
+
+REGEX="^(${TYPES_REGEX})(\\("
+
+if [[ -n $SCOPES_REGEX ]]; then
+	REGEX="${REGEX}(${SCOPES_REGEX})"
+else
+	REGEX="${REGEX}.+"
+fi
+
+REGEX="${REGEX}\\))?!?: .+"
+
+if $REVERT; then
+	REGEX="${REGEX}|^([Rr]evert): .+"
+fi
+
+if ! [[ $COMMIT_MSG =~ $REGEX ]]; then
 	echo -e "${RED}Commit message does not conform to configured standard${RESET}"
 	echo
 	echo "Your commit message: \"$COMMIT_MSG\""
@@ -40,6 +62,7 @@ if ! echo "$COMMIT_MSG" | grep -Eq "$REGEX"; then
 	echo "Learn more about conventional commits at:"
 	echo
 	echo "    https://www.conventionalcommits.org"
+	echo
 
 	exit 1
 fi
