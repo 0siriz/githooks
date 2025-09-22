@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+BOLD="\e[1m"
+RED="\e[31m"
+GREEN="\e[32m"
+YELLOW="\e[33m"
+RESET="\e[0m"
+
+CONFIG_FILE="$(git rev-parse --show-toplevel)/.commitconfig.json"
+COMMIT_MSG=$(head -n1 "$1")
+
+if [[ ! -f "$CONFIG_FILE" ]]; then
+	echo -e "${YELLOW}No config file found, skipping...${RESET}"
+
+	exit 0
+fi
+
+if ! command -v jq >/dev/null 2>&1; then
+	echo -e "${BOLD}It looks like you don't have ${RED}jq${RESET}${BOLD} installed!${RESET}"
+	echo
+	echo "You can install jq by either using your package manager"
+	echo "or downloading it from github:"
+	echo
+	echo "    https://github.com/jqlang/jq/releases/latest"
+
+	exit 1
+fi
+
+TYPES_REGEX=$(jq -r '.types | join("|")' "$CONFIG_FILE")
+REGEX="^(${TYPES_REGEX})(\\(.+\\))?!?: .+"
+
+if ! echo "$COMMIT_MSG" | grep -Eq "$REGEX"; then
+	echo -e "${RED}Commit message does not conform to configured standard${RESET}"
+	echo
+	echo "Your commit message: \"$COMMIT_MSG\""
+	echo
+	echo "Expected format: <type>[optional scope]: <description>"
+	echo "Allowed types: $(jq -r '.types | join(" ")' "$CONFIG_FILE")"
+	echo
+	echo "Learn more about conventional commits at:"
+	echo
+	echo "    https://www.conventionalcommits.org"
+
+	exit 1
+fi
+
+echo -e "${GREEN}Commit message ok${RESET}"
