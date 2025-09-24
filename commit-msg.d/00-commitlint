@@ -30,6 +30,7 @@ fi
 TYPES_REGEX=$(jq -r 'if has("types") then .types | join("|") else "" end' "$CONFIG_FILE")
 SCOPES_REGEX=$(jq -r 'if has("scopes") then .scopes | join("|") else "" end' "$CONFIG_FILE")
 REVERT=$(jq -r 'if has("revert") then .revert else false end' "$CONFIG_FILE")
+MAX_LENGTH=$(jq -r 'if has("maxlength") then .maxlength else 50 end' "$CONFIG_FILE")
 
 if [[ -z $TYPES_REGEX ]]; then
 	echo -e "${RED}No/malformed types in config file${RESET}"
@@ -37,27 +38,22 @@ if [[ -z $TYPES_REGEX ]]; then
 	exit 1
 fi
 
-REGEX="^(${TYPES_REGEX})(\\("
-
-if [[ -n $SCOPES_REGEX ]]; then
-	REGEX="${REGEX}(${SCOPES_REGEX})"
-else
-	REGEX="${REGEX}.+"
-fi
-
-REGEX="${REGEX}\\))?!?: .+"
+REGEX="^(${TYPES_REGEX})(\\((${SCOPES_REGEX:-.+})\\))?!?: .+"
 
 if $REVERT; then
 	REGEX="${REGEX}|^([Rr]evert): .+"
 fi
 
-if ! [[ $COMMIT_MSG =~ $REGEX ]]; then
+if ! [[ $COMMIT_MSG =~ $REGEX ]] || [[ ${#COMMIT_MSG} -gt $MAX_LENGTH ]]; then
 	echo -e "${RED}Commit message does not conform to configured standard${RESET}"
 	echo
 	echo "Your commit message: \"$COMMIT_MSG\""
+	echo "Message length: ${#COMMIT_MSG}"
 	echo
 	echo "Expected format: <type>[optional scope]: <description>"
 	echo "Allowed types: $(jq -r '.types | join(" ")' "$CONFIG_FILE")"
+	[[ -n $SCOPES_REGEX ]] && echo "Allowed scopes: $(jq -r '.scopes | join(" ")' "$CONFIG_FILE")"
+	echo "Allowed maximum length: $MAX_LENGTH"
 	echo
 	echo "Learn more about conventional commits at:"
 	echo
