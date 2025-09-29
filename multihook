@@ -39,7 +39,7 @@ HOOKDIRS+=("$GIT_DIR/hooks")
 
 HOOKNAME=$(basename "${BASH_SOURCE[0]}")
 
-echo -e "${BOLD}${CYAN}##### RUNNING ${HOOKNAME^^} HOOKS ${RESET}\n"
+echo -e "${BOLD}${CYAN}----- RUNNING ${HOOKNAME^^} HOOKS ${RESET} -----\n"
 
 # Run first hooks in $GIT_DIR as usual (unless that is us)
 hookscript="${GIT_DIR}/hooks/${HOOKNAME}"
@@ -72,4 +72,4 @@ if [[ -f "$hookscript" && -x "$hookscript" ]]; then
 fi
 done
 
-echo -e "${BOLD}${GREEN}##### ALL ${HOOKNAME^^} HOOKS DONE${RESET}\n"
+echo -e "${BOLD}${GREEN}----- ALL ${HOOKNAME^^} HOOKS DONE${RESET} -----\n"
