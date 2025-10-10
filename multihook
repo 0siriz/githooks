@@ -53,15 +53,31 @@ for dir in "${HOOKDIRS[@]}"; do
 	fi
 done
 
-for key in "${!TO_RUN[@]}"; do
-	echo "$key"
-done | sort | while read -r hookname; do
-hookscript="${TO_RUN[$hookname]}"
-if [[ -f "$hookscript" && -x "$hookscript" ]]; then
-	echo -e "${BOLD}${MAGENTA}##### GITHOOK: $(echo "${hookscript}" | sed "s|^${HOME}|~|")${RESET}"
-	echo "$STDIN" | "$hookscript" "$@" || exit $?
-	echo ""
-fi
-done
+declare -a FAILED=()
 
-echo -e "${BOLD}${GREEN}----- ALL ${HOOKNAME^^} HOOKS DONE${RESET} -----\n"
+while read -r hookname; do
+	hookscript="${TO_RUN[$hookname]}"
+	if [[ -f "$hookscript" && -x "$hookscript" ]]; then
+		hookname="$hookscript"
+		[[ "$hookname" =~ ^"$HOME"(/|$) ]] && hookname="~${hookname#$HOME}"
+		exit_code=0
+		echo -e "${BOLD}${MAGENTA}##### GITHOOK: $hookname"
+		echo "$STDIN" | "$hookscript" "$@" || exit_code=$?
+		echo ""
+
+		if [[ $exit_code -ne 0 ]]; then
+			FAILED+=("$hookname")
+		fi
+	fi
+done < <(
+	for key in "${!TO_RUN[@]}"; do
+		echo "$key"
+	done | sort
+)
+
+if [[ "${#FAILED[@]}" -gt 0 ]]; then
+	echo -e "${BOLD}${RED}----- ${#FAILED[@]} ${HOOKNAME^^} HOOKS FAILED -----${RESET}\n"
+	exit 1
+fi
+
+echo -e "${BOLD}${GREEN}----- ALL ${#TO_RUN[@]} ${HOOKNAME^^} HOOKS PASSED -----${RESET}\n"
