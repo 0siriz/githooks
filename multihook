@@ -19,6 +19,10 @@ MAGENTA="\e[35m"
 CYAN="\e[36m"
 RESET="\e[0m"
 
+function clean_color() {
+	echo -e "$1" | sed -e 's/\x1b\[[0-9;]*m//g'
+}
+
 # optional debug output by TRACE=1
 [[ "${TRACE:-0}" == "1" ]] && set -o xtrace
 IFS=$'\n\t'
@@ -61,10 +65,14 @@ while read -r hookname; do
 	if [[ -f "$hookscript" && -x "$hookscript" ]]; then
 		hookname="$hookscript"
 		[[ "$hookname" =~ ^"$HOME"(/|$) ]] && hookname="~${hookname#$HOME}"
+		header="${BOLD}${MAGENTA}##### GITHOOK: ${hookname}${RESET} ... "
+		header_length="$(clean_color "${header}" | wc -m)"
+		echo -e "${header}"
 		exit_code=0
-		echo -en "${BOLD}${MAGENTA}##### GITHOOK: ${hookname}${RESET} ... "
-		output="$(echo "$STDIN" | "$hookscript" "$@" 2>&1)" || exit_code=$?
-
+		exec 5>&1
+		output="$(echo "$STDIN" | "$hookscript" "$@" 2>&1 | tee >(cat - >&5))" || exit_code=$?
+		output_length="$(clean_color "${output}" | wc -l)"
+		printf "\e[%sF\e[%sC" "$(( $output_length + 1))" "$(( $header_length - 1 ))"
 		if [[ $exit_code -eq 0 ]]; then
 			PASSED+=("$hookname")
 			echo -e "${BOLD}${GREEN}PASSED${RESET}"
@@ -72,7 +80,8 @@ while read -r hookname; do
 			FAILED+=("$hookname")
 			echo -e "${BOLD}${RED}FAILED${RESET}"
 		fi
-		echo -e "${output}\n"
+		printf "\e[%sE" "$(( $output_length + 1))"
+		echo ""
 	fi
 done < <(
 	for key in "${!TO_RUN[@]}"; do
