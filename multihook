@@ -3,7 +3,6 @@
 # Put into the directory specified by core.hooksPath or just `.git/hooks/`
 # Then symlink each hookname to this script
 # Hooks go in `HOOKNAME.d/` e.g. `pre-commit.d/00-hook1`, order is (from the location of this script)
-# - $GIT_DIR/hooks/HOOKNAME
 # - $GIT_DIR/hooks/HOOKNAME.d/*
 # - $GIT_CUSTOM_HOOKS_DIR/HOOKNAME.d/*
 # - ./HOOKNAME.d/*
@@ -62,17 +61,16 @@ while read -r hookname; do
 		hookname="$hookscript"
 		[[ "$hookname" =~ ^"$HOME"(/|$) ]] && hookname="~${hookname#$HOME}"
 		exit_code=0
-		echo -en "${BOLD}${MAGENTA}##### GITHOOK: ${hookname}${RESET} ... "
-		output="$(echo "$STDIN" | "$hookscript" "$@" 2>&1)" || exit_code=$?
+		echo -e "${BOLD}${MAGENTA}##### GITHOOK: ${hookname}${RESET}"
+		echo "$STDIN" | "$hookscript" "$@" 2>&1 || exit_code=$?
 
 		if [[ $exit_code -eq 0 ]]; then
 			PASSED+=("$hookname")
-			echo -e "${BOLD}${GREEN}PASSED${RESET}"
+			echo -e "${BOLD}${GREEN}--- PASSED ---${RESET}\n"
 		else
 			FAILED+=("$hookname")
-			echo -e "${BOLD}${RED}FAILED${RESET}"
+			echo -e "${BOLD}${RED}--- FAILED ---${RESET}\n"
 		fi
-		echo -e "${output}\n"
 	fi
 done < <(
 	for key in "${!TO_RUN[@]}"; do
