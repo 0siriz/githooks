@@ -6,7 +6,7 @@ GREEN="\e[32m"
 YELLOW="\e[33m"
 RESET="\e[0m"
 
-CONFIG_FILE="$(git rev-parse --show-toplevel)/.commitconfig.json"
+CONFIG_FILE="$(git rev-parse --show-toplevel)/.commitlintrc"
 COMMIT_MSG=$(head -n1 "$1")
 
 if [[ ! -f "$CONFIG_FILE" ]]; then
@@ -15,50 +15,34 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
 	exit 0
 fi
 
-if ! command -v jq >/dev/null 2>&1; then
-	echo -e "${BOLD}It looks like you don't have ${RED}jq${RESET}${BOLD} installed!${RESET}"
-	echo
-	echo "You can install jq by either using your package manager"
-	echo "or downloading it from github:"
-	echo
-	echo "    https://github.com/jqlang/jq/releases/latest"
-	echo
+source "$CONFIG_FILE"
 
-	exit 1
-fi
+MERGE_REGEX="([Mm]erge[ a-z-]* branch.*)"
+REVERT_REGEX="([Rr]evert.*)"
 
-TYPES_REGEX=$(jq -r 'if has("types") then .types | join("|") else "" end' "$CONFIG_FILE")
-SCOPES_REGEX=$(jq -r 'if has("scopes") then .scopes | join("|") else "" end' "$CONFIG_FILE")
-REVERT=$(jq -r 'if has("revert") then .revert else false end' "$CONFIG_FILE")
-MAX_LENGTH=$(jq -r 'if has("maxlength") then .maxlength else 50 end' "$CONFIG_FILE")
+TYPE_REGEX="($(IFS=\|; echo "${TYPES[*]}"))"
+[[ ${#SCOPES[*]} -gt 0 ]] && SCOPE_REGEX="(\($(IFS=\|; echo "${SCOPES[*]}")\))?" || SCOPE_REGEX="(\([a-zA-Z0-9_\-]+\))?"
+SUBJECT_REGEX=".{1,$SUBJECT_MAX}"
 
-if [[ -z $TYPES_REGEX ]]; then
-	echo -e "${RED}No/malformed types in config file${RESET}"
+REGEX="^(${MERGE_REGEX}|${REVERT_REGEX}|${TYPE_REGEX}${SCOPE_REGEX}!?: ${SUBJECT_REGEX})"
 
-	exit 1
-fi
+if ! [[ $COMMIT_MSG =~ $REGEX ]]; then
+	cat <<-EOF
+	$(echo -e "${RED}Commit message does not conform to the configured standard${RESET}")
 
-REGEX="^(${TYPES_REGEX})(\\((${SCOPES_REGEX:-.+})\\))?!?: .+"
+	Your commit messages: "${COMMIT_MSG}"
 
-if $REVERT; then
-	REGEX="${REGEX}|^([Rr]evert): .+"
-fi
+	Expected format: <type>(<scope>): <subject>
 
-if ! [[ $COMMIT_MSG =~ $REGEX ]] || [[ ${#COMMIT_MSG} -gt $MAX_LENGTH ]]; then
-	echo -e "${RED}Commit message does not conform to configured standard${RESET}"
-	echo
-	echo "Your commit message: \"$COMMIT_MSG\""
-	echo "Message length: ${#COMMIT_MSG}"
-	echo
-	echo "Expected format: <type>[optional scope]: <description>"
-	echo "Allowed types: $(jq -r '.types | join(" ")' "$CONFIG_FILE")"
-	[[ -n $SCOPES_REGEX ]] && echo "Allowed scopes: $(jq -r '.scopes | join(" ")' "$CONFIG_FILE")"
-	echo "Allowed maximum length: $MAX_LENGTH"
-	echo
-	echo "Learn more about conventional commits at:"
-	echo
-	echo "    https://www.conventionalcommits.org"
-	echo
+	Allowed types: ${TYPES[*]}
+	Allowed scopes: $([[ ${#SCOPES[*]} -gt 0 ]] && echo "${SCOPES[*]}" || echo "ANY")
+	Subject max length: ${SUBJECT_MAX}
+
+	Learn more about conventional commits at:
+
+	    https://www.conventionalcommits.org
+
+	EOF
 
 	exit 1
 fi
