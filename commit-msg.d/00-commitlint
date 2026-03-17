@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 
-BOLD="\e[1m"
-RED="\e[31m"
-GREEN="\e[32m"
-YELLOW="\e[33m"
-RESET="\e[0m"
+BOLD=$(echo -e "\x1b[1m")
+RED=$(echo -e "\x1b[31m")
+GREEN=$(echo -e "\x1b[32m")
+YELLOW=$(echo -e "\x1b[33m")
+RESET=$(echo -e "\x1b[0m")
 
 CONFIG_FILE="$(git rev-parse --show-toplevel)/.commitlintrc"
 COMMIT_MSG=$(head -n1 "$1")
 
 if [[ ! -f "$CONFIG_FILE" ]]; then
-	echo -e "${YELLOW}No config file found, skipping...${RESET}"
+	echo "${YELLOW}No config file found, skipping...${RESET}"
 
 	exit 0
 fi
@@ -19,7 +19,6 @@ source "$CONFIG_FILE"
 
 MERGE_REGEX="([Mm]erge[ a-z-]* branch.*)"
 REVERT_REGEX="([Rr]evert.*)"
-
 TYPE_REGEX="($(IFS=\|; echo "${TYPES[*]}"))"
 [[ ${#SCOPES[*]} -gt 0 ]] && SCOPE_REGEX="(\($(IFS=\|; echo "${SCOPES[*]}")\))?" || SCOPE_REGEX="(\([a-zA-Z0-9_\-]+\))?"
 SUBJECT_REGEX=".{1,$SUBJECT_MAX}"
@@ -28,7 +27,7 @@ REGEX="^(${MERGE_REGEX}|${REVERT_REGEX}|${TYPE_REGEX}${SCOPE_REGEX}!?: ${SUBJECT
 
 if ! [[ $COMMIT_MSG =~ $REGEX ]]; then
 	cat <<-EOF
-	$(echo -e "${RED}Commit message does not conform to the configured standard${RESET}")
+	${RED}Commit message does not conform to the configured standard${RESET}
 
 	Your commit messages: "${COMMIT_MSG}"
 
@@ -47,4 +46,4 @@ if ! [[ $COMMIT_MSG =~ $REGEX ]]; then
 	exit 1
 fi
 
-echo -e "${GREEN}Commit message ok${RESET}"
+echo "${GREEN}Commit message ok${RESET}"

@@ -10,13 +10,13 @@
 set -eEu -o pipefail
 shopt -s inherit_errexit
 
-BOLD="\e[1m"
-RED="\e[31m"
-GREEN="\e[32m"
-YELLOW="\e[33m"
-MAGENTA="\e[35m"
-CYAN="\e[36m"
-RESET="\e[0m"
+BOLD=$(echo -e "\x1b[1m")
+RED=$(echo -e "\x1b[31m")
+GREEN=$(echo -e "\x1b[32m")
+YELLOW=$(echo -e "\x1b[33m")
+MAGENTA=$(echo -e "\x1b[35m")
+CYAN=$(echo -e "\x1b[36m")
+RESET=$(echo -e "\x1b[0m")
 
 # optional debug output by TRACE=1
 [[ "${TRACE:-0}" == "1" ]] && set -o xtrace
@@ -38,7 +38,10 @@ HOOKDIRS+=("$GIT_DIR/hooks")
 
 HOOKNAME=$(basename "${BASH_SOURCE[0]}")
 
-echo -e "${BOLD}${CYAN}### RUNNING ${HOOKNAME^^} HOOKS ${RESET}\n"
+cat <<-EOF
+${BOLD}${CYAN}### RUNNING ${HOOKNAME^^} HOOKS ${RESET}
+
+EOF
 
 declare -A TO_RUN
 
@@ -61,15 +64,21 @@ while read -r hookname; do
 		hookname="$hookscript"
 		[[ "$hookname" =~ ^"$HOME"(/|$) ]] && hookname="~${hookname#$HOME}"
 		exit_code=0
-		echo -e "${BOLD}${MAGENTA}##### GITHOOK: ${hookname}${RESET}"
+		echo "${BOLD}${MAGENTA}##### GITHOOK: ${hookname}${RESET}"
 		echo "$STDIN" | "$hookscript" "$@" 2>&1 || exit_code=$?
 
 		if [[ $exit_code -eq 0 ]]; then
 			PASSED+=("$hookname")
-			echo -e "${BOLD}${GREEN}--- PASSED ---${RESET}\n"
+			cat <<-EOF
+			${BOLD}${GREEN}--- PASSED ---${RESET}
+
+			EOF
 		else
 			FAILED+=("$hookname")
-			echo -e "${BOLD}${RED}--- FAILED ---${RESET}\n"
+			cat <<-EOF
+			${BOLD}${RED}--- FAILED ---${RESET}
+
+			EOF
 		fi
 	fi
 done < <(
@@ -78,14 +87,14 @@ done < <(
 	done | sort
 )
 
-echo -e "${BOLD}${CYAN}### ${HOOKNAME^^} SUMMARY ${RESET}"
+echo "${BOLD}${CYAN}### ${HOOKNAME^^} SUMMARY ${RESET}"
 
 if [[ "${#PASSED[@]}" -gt 0 ]]; then
-	echo -e "${BOLD}${GREEN}PASSED: ${#PASSED[@]}${RESET}"
+	echo "${BOLD}${GREEN}PASSED: ${#PASSED[@]}${RESET}"
 fi
 
 if [[ "${#FAILED[@]}" -gt 0 ]]; then
-	echo -e "${BOLD}${RED}FAILED: ${#FAILED[@]}${RESET}\n"
+	echo "${BOLD}${RED}FAILED: ${#FAILED[@]}${RESET}"
 	exit 1
 fi
 

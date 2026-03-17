@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 
-RED="\e[31m"
-GREEN="\e[32m"
-RESET="\e[0m"
+RED=$(echo -e "\x1b[31m")
+GREEN=$(echo -e "\x1b[32m")
+RESET=$(echo -e "\x1b[0m")
 
 if ! git verify-commit HEAD >/dev/null 2>&1; then
-	echo -e "${RED}Commit '$(git --no-pager log -1 --format=format:"%h %s" HEAD)' isn't signed${RESET}"
-	echo "Please amend the commit to be signed:"
-	echo ""
-	echo "    git commit -S --amend"
+	cat <<-EOF
+	${RED}Commit '$(git --no-pager log -1 --format=format:"%h %s" HEAD)' isn't signed${RESET}
+	Please amend the commit to be signed:
+
+	    git commit -S --amend
+
+	EOF
 else
-	echo -e "${GREEN}Commit '$(git --no-pager log -1 --format=format:"%h %s" HEAD)' is signed${RESET}"
+	echo "${GREEN}Commit '$(git --no-pager log -1 --format=format:"%h %s" HEAD)' is signed${RESET}"
 fi

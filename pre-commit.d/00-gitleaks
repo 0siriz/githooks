@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
 
-BOLD="\e[1m"
-RED="\e[31m"
-RESET="\e[0m"
+BOLD=$(echo -e "\x1b[1m")
+RED=$(echo -e "\x1b[31m")
+RESET=$(echo -e "\x1b[0m")
 
 if ! command -v gitleaks >/dev/null 2>&1; then
-	echo -e "${BOLD}It looks like you don't have ${RED}gitleaks${RESET}${BOLD} installed!${RESET}"
-	echo
-	echo "You have a hook installed that uses gitleaks to scan for"
-	echo "accidentally committed secrets. You can install gitleaks by either"
-	echo "using your package manager or downloading from github:"
-	echo
-	echo "    https://github.com/gitleaks/gitleaks/releases/latest"
-	echo
+	cat <<- EOF
+	${BOLD}It looks like you don't have ${RED}gitleaks${RESET}${BOLD} installed!${RESET}
+
+	You have a hook installed that uses gitleaks to scan for
+	accidentally committed secrets. You can install gitleaks by either
+	using your package manager or downloading from github:
+
+	    https://github.com/gitleaks/gitleaks/releases/latest
+
+	EOF
 
 	exit 1
 fi

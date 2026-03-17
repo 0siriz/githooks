@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
 
-RED="\e[31m"
-GREEN="\e[32m"
-RESET="\e[0m"
+RED=$(echo -e "\x1b[31m")
+GREEN=$(echo -e "\x1b[32m")
+RESET=$(echo -e "\x1b[0m")
 
 exit_code=0
 output="$(git --no-pager diff --cached --check 2>&1)" || exit_code=$?
 
 if [[ $exit_code -ne 0 ]]; then
-	echo -e "${RED}Found issues in the diff:${RESET}"
-	echo "$output"
+	cat <<-EOF
+	${RED}Found issues in the diff:${RESET}
+	${output}
 
-	echo -e "\n${RED}Please fix issues before committing${RESET}"
+	Please fix issues before committing
+	EOF
+
 	exit 1
 else
-	echo -e "${GREEN}Diff is clean${RESET}"
+	echo "${GREEN}Diff is clean${RESET}"
 fi
