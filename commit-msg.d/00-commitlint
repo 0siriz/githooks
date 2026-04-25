@@ -20,13 +20,14 @@ source "$CONFIG_FILE"
 MERGE_REGEX="([Mm]erge[ a-z-]* branch.*)"
 REVERT_REGEX="([Rr]evert.*)"
 TYPE_REGEX="($(IFS=\|; echo "${TYPES[*]}"))"
-[[ ${#SCOPES[*]} -gt 0 ]] && SCOPE_REGEX="(\($(IFS=\|; echo "${SCOPES[*]}")\))?" || SCOPE_REGEX="(\([a-zA-Z0-9_\-]+\))?"
+[[ ${#SCOPES[*]} -gt 0 ]] && SCOPE_REGEX="(\(($(IFS=\|; echo "${SCOPES[*]}"))\))?" || SCOPE_REGEX="(\([a-zA-Z0-9_\-]+\))?"
 SUBJECT_REGEX=".{1,$SUBJECT_MAX}"
 
 REGEX="^(${MERGE_REGEX}|${REVERT_REGEX}|${TYPE_REGEX}${SCOPE_REGEX}!?: ${SUBJECT_REGEX})"
 
 if ! [[ $COMMIT_MSG =~ $REGEX ]]; then
 	cat <<-EOF
+	echo "${REGEX}"
 	${RED}Commit message does not conform to the configured standard${RESET}
 
 	Your commit messages: "${COMMIT_MSG}"
