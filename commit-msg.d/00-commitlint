@@ -15,6 +15,12 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
 	exit 0
 fi
 
+if [[ -z $COMMIT_MSG ]]; then
+	echo "${YELLOW}Empty commit message, no need to lint...${RESET}"
+
+	exit 0
+fi
+
 source "$CONFIG_FILE"
 
 MERGE_REGEX="([Mm]erge[ a-z-]* branch.*)"
