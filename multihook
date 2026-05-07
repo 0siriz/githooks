@@ -67,19 +67,19 @@ while read -r hookname; do
 		hookname="$hookscript"
 		[[ "$hookname" =~ ^"$HOME"(/|$) ]] && hookname="~${hookname#$HOME}"
 		exit_code=0
-		echo -n "${BOLD}${MAGENTA}##### GITHOOK: ${hookname}${RESET}"
+		echo -n "${BOLD}${MAGENTA}##### GITHOOK: ${hookname}${RESET} ... "
 		output=$(echo "$STDIN" | "$hookscript" "$@" 2>&1) || exit_code=$?
 
 		if [[ $exit_code -eq 0 ]]; then
 			PASSED+=("$hookname")
-			echo " ... ${BOLD}${GREEN}PASSED${RESET}"
+			echo "${BOLD}${GREEN}PASSED${RESET}"
 		elif [[ $exit_code -eq 2 ]]; then
 			SKIPPED=("$hookname")
-			echo " ... ${BOLD}${YELLOW}SKIPPED${RESET}"
+			echo "${BOLD}${YELLOW}SKIPPED${RESET}"
 			echo "${output}"
 		else
 			FAILED+=("$hookname")
-			echo " ... ${BOLD}${RED}FAILED${RESET}"
+			echo "${BOLD}${RED}FAILED${RESET}"
 			echo "${output}"
 		fi
 	fi
