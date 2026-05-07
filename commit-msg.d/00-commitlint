@@ -12,13 +12,13 @@ COMMIT_MSG=$(head -n1 "$1")
 if [[ ! -f "$CONFIG_FILE" ]]; then
 	echo "${YELLOW}No config file found, skipping...${RESET}"
 
-	exit 0
+	exit 2
 fi
 
 if [[ -z $COMMIT_MSG ]]; then
 	echo "${YELLOW}Empty commit message, no need to lint...${RESET}"
 
-	exit 0
+	exit 2
 fi
 
 source "$CONFIG_FILE"

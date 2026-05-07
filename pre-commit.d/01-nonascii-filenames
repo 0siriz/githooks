@@ -19,7 +19,7 @@ if [[ "$allownonascii" == "true" ]]; then
 
 	EOF
 
-	exit 0
+	exit 2
 fi
 
 if git rev-parse --verify HEAD >/dev/null 2>&1; then

@@ -2,7 +2,9 @@
 
 # Put into the directory specified by core.hooksPath or just `.git/hooks/`
 # Then symlink each hookname to this script
-# Hooks go in `HOOKNAME.d/` e.g. `pre-commit.d/00-hook1`, order is (from the location of this script)
+# Hooks go in `HOOKNAME.d/` e.g. `pre-commit.d/00-hook1`
+# Hooks are taken from the following directories
+# from the location of this script:
 # - $GIT_DIR/hooks/HOOKNAME.d/*
 # - $GIT_CUSTOM_HOOKS_DIR/HOOKNAME.d/*
 # - ./HOOKNAME.d/*
@@ -56,6 +58,7 @@ for dir in "${HOOKDIRS[@]}"; do
 done
 
 declare -a FAILED=()
+declare -a SKIPPED=()
 declare -a PASSED=()
 
 while read -r hookname; do
@@ -64,21 +67,20 @@ while read -r hookname; do
 		hookname="$hookscript"
 		[[ "$hookname" =~ ^"$HOME"(/|$) ]] && hookname="~${hookname#$HOME}"
 		exit_code=0
-		echo "${BOLD}${MAGENTA}##### GITHOOK: ${hookname}${RESET}"
-		echo "$STDIN" | "$hookscript" "$@" 2>&1 || exit_code=$?
+		echo -n "${BOLD}${MAGENTA}##### GITHOOK: ${hookname}${RESET}"
+		output=$(echo "$STDIN" | "$hookscript" "$@" 2>&1) || exit_code=$?
 
 		if [[ $exit_code -eq 0 ]]; then
 			PASSED+=("$hookname")
-			cat <<-EOF
-			${BOLD}${GREEN}--- PASSED ---${RESET}
-
-			EOF
+			echo " ... ${BOLD}${GREEN}PASSED${RESET}"
+		elif [[ $exit_code -eq 2 ]]; then
+			SKIPPED=("$hookname")
+			echo " ... ${BOLD}${YELLOW}SKIPPED${RESET}"
+			echo "${output}"
 		else
 			FAILED+=("$hookname")
-			cat <<-EOF
-			${BOLD}${RED}--- FAILED ---${RESET}
-
-			EOF
+			echo " ... ${BOLD}${RED}FAILED${RESET}"
+			echo "${output}"
 		fi
 	fi
 done < <(
@@ -87,15 +89,21 @@ done < <(
 	done | sort
 )
 
+echo ""
 echo "${BOLD}${CYAN}### ${HOOKNAME^^} SUMMARY ${RESET}"
 
 if [[ "${#PASSED[@]}" -gt 0 ]]; then
 	echo "${BOLD}${GREEN}PASSED: ${#PASSED[@]}${RESET}"
 fi
 
+if [[ "${#SKIPPED[@]}" -gt 0 ]]; then
+	echo "${BOLD}${YELLOW}SKIPPED: ${#SKIPPED[@]}${RESET}"
+fi
+
 if [[ "${#FAILED[@]}" -gt 0 ]]; then
 	echo "${BOLD}${RED}FAILED: ${#FAILED[@]}${RESET}"
-	exit 1
 fi
 
 echo ""
+
+[[ "${#FAILED[@]}" -eq 0 ]] || exit 1
