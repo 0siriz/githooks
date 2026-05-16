@@ -12,17 +12,21 @@
 set -eEu -o pipefail
 shopt -s inherit_errexit
 
-BOLD=$(echo -e "\x1b[1m")
-RED=$(echo -e "\x1b[31m")
-GREEN=$(echo -e "\x1b[32m")
-YELLOW=$(echo -e "\x1b[33m")
-MAGENTA=$(echo -e "\x1b[35m")
-CYAN=$(echo -e "\x1b[36m")
 RESET=$(echo -e "\x1b[0m")
+BLACK_FG=$(echo -e "\x1b[30m")
+RED_FG=$(echo -e "\x1b[31m")
+RED_BG=$(echo -e "\x1b[41m")
+GREEN_FG=$(echo -e "\x1b[32m")
+GREEN_BG=$(echo -e "\x1b[42m")
+YELLOW_FG=$(echo -e "\x1b[33m")
+YELLOW_BG=$(echo -e "\x1b[43m")
+MAGENTA_FG=$(echo -e "\x1b[35m")
+CYAN_FG=$(echo -e "\x1b[36m")
+
 
 function truncate_path() {
 	local path="$1"
-	local max_len="${2:-50}"
+	local max_len="$2"
 
 	(( ${#path} <= max_len )) && {
 		echo "$path"
@@ -81,19 +85,18 @@ function truncate_path() {
 
 format_hook() {
 	local hookname="$1"
+	local max_len="$2"
 
-	hookname=$(truncate_path "$hookname")
+	hookname=$(truncate_path "$hookname" $((max_len - 16)))
 
-	local output="[HOOK] ${hookname}"
-
-	local dotcount=$(( 60 - ${#output} ))
+	local dotcount=$((max_len - ${#hookname} - 13))
 	local dots=""
 
 	for (( i=0; i<dotcount; i++ )); do
 		dots="${dots}."
 	done
 
-	echo -n "${MAGENTA}${output}${RESET} ${dots} "
+	echo -n "${MAGENTA_FG}[HOOK] ${hookname}${RESET} ${dots} "
 }
 
 # optional debug output by TRACE=1
@@ -116,7 +119,7 @@ HOOKDIRS+=("$GIT_DIR/hooks")
 
 HOOKNAME=$(basename "${BASH_SOURCE[0]}")
 
-echo "${CYAN}[START] Running ${HOOKNAME} hooks ${RESET}"
+echo "${CYAN_FG}[START] Running ${HOOKNAME} hooks ${RESET}"
 
 declare -A TO_RUN
 
@@ -140,20 +143,21 @@ while read -r hookname; do
 		hookname="$hookscript"
 		[[ "$hookname" =~ ^"$HOME"(/|$) ]] && hookname="~${hookname#$HOME}"
 		exit_code=0
-		format_hook "${hookname}"
+		columns=$(tput cols)
+		format_hook "${hookname}" $((columns>40 ? columns<80 ? columns : 80 : 40))
 		output=$(echo "$STDIN" | "$hookscript" "$@" 2>&1) || exit_code=$?
 
 		if [[ $exit_code -eq 0 ]]; then
 			PASSED+=("$hookname")
-			echo "${GREEN}Passed${RESET}"
+			echo "${BLACK_FG}${GREEN_BG}PASS${RESET}"
 		elif [[ $exit_code -eq 2 ]]; then
 			SKIPPED=("$hookname")
-			echo "${YELLOW}Skipped${RESET}"
+			echo "${BLACK_FG}${YELLOW_BG}SKIP${RESET}"
 			echo "${output}"
 			echo ""
 		else
 			FAILED+=("$hookname")
-			echo "${RED}Failed${RESET}"
+			echo "${BLACK_FG}${RED_BG}FAIL${RESET}"
 			echo "${output}"
 			echo ""
 		fi
@@ -164,18 +168,18 @@ done < <(
 	done | sort
 )
 
-echo "${CYAN}[END] Summary of ${HOOKNAME} hooks ${RESET}"
+echo "${CYAN_FG}[END] Summary of ${HOOKNAME} hooks ${RESET}"
 
 if [[ "${#PASSED[@]}" -gt 0 ]]; then
-	echo "${GREEN}Passed: ${#PASSED[@]}${RESET}"
+	echo "${GREEN_FG}Passed: ${#PASSED[@]}${RESET}"
 fi
 
 if [[ "${#SKIPPED[@]}" -gt 0 ]]; then
-	echo "${YELLOW}Skipped: ${#SKIPPED[@]}${RESET}"
+	echo "${YELLOW_FG}Skipped: ${#SKIPPED[@]}${RESET}"
 fi
 
 if [[ "${#FAILED[@]}" -gt 0 ]]; then
-	echo "${RED}Failed: ${#FAILED[@]}${RESET}"
+	echo "${RED_FG}Failed: ${#FAILED[@]}${RESET}"
 fi
 
 echo ""
