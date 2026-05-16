@@ -22,7 +22,7 @@ RESET=$(echo -e "\x1b[0m")
 
 function truncate_path() {
 	local path="$1"
-	local max_len="${2:-50}"
+	local max_len="$2"
 
 	(( ${#path} <= max_len )) && {
 		echo "$path"
@@ -81,12 +81,13 @@ function truncate_path() {
 
 format_hook() {
 	local hookname="$1"
+	local max_len="$2"
 
-	hookname=$(truncate_path "$hookname")
+	hookname=$(truncate_path "$hookname" $((max_len - 20)))
 
 	local output="[HOOK] ${hookname}"
 
-	local dotcount=$(( 60 - ${#output} ))
+	local dotcount=$((max_len - ${#output} - 10))
 	local dots=""
 
 	for (( i=0; i<dotcount; i++ )); do
@@ -140,7 +141,8 @@ while read -r hookname; do
 		hookname="$hookscript"
 		[[ "$hookname" =~ ^"$HOME"(/|$) ]] && hookname="~${hookname#$HOME}"
 		exit_code=0
-		format_hook "${hookname}"
+		columns=$(tput cols)
+		format_hook "${hookname}" $((columns>40 ? columns<80 ? columns : 80 : 40))
 		output=$(echo "$STDIN" | "$hookscript" "$@" 2>&1) || exit_code=$?
 
 		if [[ $exit_code -eq 0 ]]; then
