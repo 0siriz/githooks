@@ -134,12 +134,34 @@ for dir in "${HOOKDIRS[@]}"; do
 	fi
 done
 
+declare -A SKIP_LIST
+skip_sources=()
+skip_config=$(git config --get hooks.skip 2>/dev/null || true)
+[[ -n "$skip_config" ]] && skip_sources+=("$skip_config")
+[[ -n "${SKIP_HOOKS:-}" ]] && skip_sources+=("$SKIP_HOOKS")
+IFS=',' read -ra skip_entries <<< "$(IFS=, ; echo "${skip_sources[*]}")"
+for entry in "${skip_entries[@]}"; do
+	entry="${entry#"${entry%%[![:space:]]*}"}"
+	entry="${entry%"${entry##*[![:space:]]}"}"
+	[[ -n "$entry" ]] && SKIP_LIST["$entry"]=1
+done
+
 declare -a FAILED=()
+declare -a SKIPPED=()
 declare -a PASSED=()
 
 while read -r hookname; do
 	hookscript="${TO_RUN[$hookname]}"
 	if [[ -f "$hookscript" && -x "$hookscript" ]]; then
+		if [[ -n "${SKIP_LIST[$hookname]:-}" ]]; then
+			display_name="$hookscript"
+			[[ "$display_name" =~ ^"$HOME"(/|$) ]] && display_name="~${display_name#$HOME}"
+			columns=$(tput cols)
+			format_hook "${display_name}" $((columns>40 ? columns<80 ? columns : 80 : 40))
+			echo "${BLACK_FG}${YELLOW_BG}SKIP${RESET}"
+			SKIPPED+=("$display_name")
+			continue
+		fi
 		if [[ -x "${hookscript}.condition" ]]; then
 			"${hookscript}.condition" >/dev/null 2>&1 || continue
 		fi
@@ -174,6 +196,10 @@ fi
 
 if [[ "${#FAILED[@]}" -gt 0 ]]; then
 	echo "${RED_FG}Failed: ${#FAILED[@]}${RESET}"
+fi
+
+if [[ "${#SKIPPED[@]}" -gt 0 ]]; then
+	echo "${YELLOW_FG}Skipped: ${#SKIPPED[@]}${RESET}"
 fi
 
 echo ""
