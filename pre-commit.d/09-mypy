@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+RED=$(echo -e "\x1b[31m")
+GREEN=$(echo -e "\x1b[32m")
+RESET=$(echo -e "\x1b[0m")
+
+output=$(uv run mypy . 2>&1) || {
+	echo "${RED}Mypy type checking found issues:${RESET}"
+	echo "$output"
+	exit 1
+}
+echo "${GREEN}Mypy type checking passed${RESET}"

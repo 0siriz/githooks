@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+RED=$(echo -e "\x1b[31m")
+GREEN=$(echo -e "\x1b[32m")
+RESET=$(echo -e "\x1b[0m")
+
+output=$(uv run ruff check . 2>&1) || {
+	echo "${RED}Ruff linting issues found:${RESET}"
+	echo "$output"
+	exit 1
+}
+echo "${GREEN}Ruff linting passed${RESET}"
