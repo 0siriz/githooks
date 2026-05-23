@@ -5,30 +5,13 @@ GREEN=$(echo -e "\x1b[32m")
 YELLOW=$(echo -e "\x1b[33m")
 RESET=$(echo -e "\x1b[0m")
 
-allownonascii=$(git config --type=bool hooks.allownonascii)
-
-if [[ "$allownonascii" == "true" ]]; then
-	cat <<-EOF
-	${YELLOW}Warning: this check is disabled.${RESET}
-
-	So non-ASCII file names are allowed.
-
-	You can enable this check using:
-
-	    git config hooks.allownonascii false
-
-	EOF
-
-	exit 2
-fi
-
 if git rev-parse --verify HEAD >/dev/null 2>&1; then
 	against=HEAD
 else
 	against=$(git hash-object -t tree /dev/null)
 fi
 
-if [[ "$allownonascii" != "true" ]] && test $(git diff-index --cached --name-only --diff-filter=A -z $against | LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0; then
+if test $(git diff-index --cached --name-only --diff-filter=A -z $against | LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0; then
 	cat <<-EOF
 	${RED}Error: Attempt to add a non-ASCII file name.
 

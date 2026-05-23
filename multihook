@@ -128,18 +128,21 @@ for dir in "${HOOKDIRS[@]}"; do
 	if [[ -d "$hookdir" ]]; then
 		for hook in "$hookdir"/*; do
 			hookname="$(basename "$hook")"
+			[[ "$hookname" == *.condition ]] && continue
 			TO_RUN[$hookname]="$hook"
 		done
 	fi
 done
 
 declare -a FAILED=()
-declare -a SKIPPED=()
 declare -a PASSED=()
 
 while read -r hookname; do
 	hookscript="${TO_RUN[$hookname]}"
 	if [[ -f "$hookscript" && -x "$hookscript" ]]; then
+		if [[ -x "${hookscript}.condition" ]]; then
+			"${hookscript}.condition" >/dev/null 2>&1 || continue
+		fi
 		hookname="$hookscript"
 		[[ "$hookname" =~ ^"$HOME"(/|$) ]] && hookname="~${hookname#$HOME}"
 		exit_code=0
@@ -150,11 +153,6 @@ while read -r hookname; do
 		if [[ $exit_code -eq 0 ]]; then
 			PASSED+=("$hookname")
 			echo "${BLACK_FG}${GREEN_BG}PASS${RESET}"
-		elif [[ $exit_code -eq 2 ]]; then
-			SKIPPED+=("$hookname")
-			echo "${BLACK_FG}${YELLOW_BG}SKIP${RESET}"
-			echo "${output}"
-			echo ""
 		else
 			FAILED+=("$hookname")
 			echo "${BLACK_FG}${RED_BG}FAIL${RESET}"
@@ -172,10 +170,6 @@ echo "${CYAN_FG}[END] Summary of ${HOOKNAME} hooks ${RESET}"
 
 if [[ "${#PASSED[@]}" -gt 0 ]]; then
 	echo "${GREEN_FG}Passed: ${#PASSED[@]}${RESET}"
-fi
-
-if [[ "${#SKIPPED[@]}" -gt 0 ]]; then
-	echo "${YELLOW_FG}Skipped: ${#SKIPPED[@]}${RESET}"
 fi
 
 if [[ "${#FAILED[@]}" -gt 0 ]]; then
