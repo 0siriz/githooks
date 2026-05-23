@@ -151,7 +151,7 @@ while read -r hookname; do
 			PASSED+=("$hookname")
 			echo "${BLACK_FG}${GREEN_BG}PASS${RESET}"
 		elif [[ $exit_code -eq 2 ]]; then
-			SKIPPED=("$hookname")
+			SKIPPED+=("$hookname")
 			echo "${BLACK_FG}${YELLOW_BG}SKIP${RESET}"
 			echo "${output}"
 			echo ""
