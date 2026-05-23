@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+RED=$(echo -e "\x1b[31m")
+GREEN=$(echo -e "\x1b[32m")
+RESET=$(echo -e "\x1b[0m")
+
+output=$(go mod verify 2>&1) || {
+	echo "${RED}Go module verification failed:${RESET}"
+	echo "$output"
+	exit 1
+}
+echo "${GREEN}Go modules verified${RESET}"

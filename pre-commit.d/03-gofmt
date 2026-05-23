@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+RED=$(echo -e "\x1b[31m")
+GREEN=$(echo -e "\x1b[32m")
+RESET=$(echo -e "\x1b[0m")
+
+unformatted=$(gofmt -l .)
+if [[ -n "$unformatted" ]]; then
+	echo "${RED}Unformatted Go files:${RESET}"
+	echo "$unformatted"
+	exit 1
+fi
+echo "${GREEN}All Go files are properly formatted${RESET}"
