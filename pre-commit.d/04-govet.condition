@@ -1,2 +1,4 @@
 #!/usr/bin/env bash
-[[ -f "$(git rev-parse --show-toplevel)/go.mod" ]] && command -v go >/dev/null 2>&1
+[[ -f "$(git rev-parse --show-toplevel)/go.mod" ]] && \
+	! command -v golangci-lint >/dev/null 2>&1 && \
+	command -v go >/dev/null 2>&1
