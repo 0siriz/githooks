@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-test -f go.mod && command -v gofmt >/dev/null 2>&1
+[[ -f "$(git rev-parse --show-toplevel)/go.mod" ]] && command -v gofmt >/dev/null 2>&1

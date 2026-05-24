@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-test "$(git config --type=bool hooks.allownonascii 2>/dev/null)" != "true"
+[[ "$(git config --type=bool hooks.allownonascii 2>/dev/null)" != "true" ]]

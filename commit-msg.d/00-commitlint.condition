@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-test -f "$(git rev-parse --show-toplevel)/.commitlintrc"
+[[ -f "$(git rev-parse --show-toplevel)/.commitlintrc" ]]

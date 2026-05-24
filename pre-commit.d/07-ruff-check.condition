@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-test -f pyproject.toml && command -v uv >/dev/null 2>&1 && uv run --no-sync ruff --version >/dev/null 2>&1
+[[ -f "$(git rev-parse --show-toplevel)/pyproject.toml" ]] && command -v uv >/dev/null 2>&1 && uv run --no-sync ruff --version >/dev/null 2>&1
