@@ -20,6 +20,8 @@ cp -r /tmp/githooks/* .git/hooks/
 
 ## Dependencies
 - `pre-commit.d/00-gitleaks` requires the [gitleaks](https://github.com/gitleaks/gitleaks) utility
+- Linting hooks requires their respective linters installed to work.
+  - The python linters specifically needs the linters installed as dev dependencies in [uv](https://docs.astral.sh/uv/) managed projects
 
 ## Conditional hooks
 To only run a hook when certain conditions are met, create an executable sidecar file named `<hookname>.condition` next to the hook script. If the condition file exits non-zero, the hook is silently skipped (no terminal output).
