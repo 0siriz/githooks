@@ -11,7 +11,7 @@ else
 	against=$(git hash-object -t tree /dev/null)
 fi
 
-if test $(git diff-index --cached --name-only --diff-filter=A -z $against | LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0; then
+if [[ $(git diff-index --cached --name-only --diff-filter=A -z $against | LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0 ]]; then
 	cat <<-EOF
 	${RED}Error: Attempt to add a non-ASCII file name.
 
@@ -25,6 +25,6 @@ if test $(git diff-index --cached --name-only --diff-filter=A -z $against | LC_A
 	EOF
 
 	exit 1
-else
-	echo "${GREEN}No non-ASCII file names found${RESET}"
 fi
+
+echo "${GREEN}No non-ASCII file names found${RESET}"

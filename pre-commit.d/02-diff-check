@@ -4,10 +4,7 @@ RED=$(echo -e "\x1b[31m")
 GREEN=$(echo -e "\x1b[32m")
 RESET=$(echo -e "\x1b[0m")
 
-exit_code=0
-output="$(git --no-pager diff --cached --check 2>&1)" || exit_code=$?
-
-if [[ $exit_code -ne 0 ]]; then
+output=$(git --no-pager diff --cached --check 2>&1) || {
 	cat <<-EOF
 	${RED}Found issues in the diff:${RESET}
 	${output}
@@ -16,6 +13,5 @@ if [[ $exit_code -ne 0 ]]; then
 	EOF
 
 	exit 1
-else
-	echo "${GREEN}Diff is clean${RESET}"
-fi
+}
+echo "${GREEN}Diff is clean${RESET}"
