@@ -22,24 +22,23 @@ cp -r /tmp/githooks/* .git/hooks/
 - `pre-commit.d/00-gitleaks` requires the [gitleaks](https://github.com/gitleaks/gitleaks) utility
 
 ## Conditional hooks
-
 To only run a hook when certain conditions are met, create an executable sidecar file named `<hookname>.condition` next to the hook script. If the condition file exits non-zero, the hook is silently skipped (no terminal output).
 
-Example — only run Go linting in Go projects (`pre-commit.d/00-golint.condition`):
+Example: only run Go linting in Go projects (`pre-commit.d/50-golangci-lint.condition`):
 
 ```sh
 #!/usr/bin/env bash
-test -f go.mod && command -v golangci-lint >/dev/null 2>&1
+[[ -f "$(git rev-parse --show-toplevel)/go.mod" ]] && command -v golangci-lint >/dev/null 2>&1
 ```
 
 This pairs naturally with project-specific hooks: place a language/tool check in the `.condition` file and the hook script itself stays focused on the actual linting logic.
 
 Several bundled hooks include `.condition` files to only run when relevant:
-- `pre-commit.d/00-gitleaks` won't run until the gitleaks utility is installed separately (it fails if absent)
-- `pre-commit.d/01-nonascii-filenames.condition` checks `hooks.allownonascii` — set it to `true` to disable
+- `pre-commit.d/01-nonascii-filenames.condition` checks `hooks.allownonascii`, set it to `true` to disable
+- `pre-commit.d/50-*.condition` files check that the correct tools are installed and the repo is a compatible project type
 
 ## Notes
-I like having my commits signed, and so `post-commit.d/99-warn-unsigned` and `post-rewrite.d/99-warn-unsigned` will warn of missing commit signature, if you dont want this then you are welcome to delete them
+I like having my commits signed, and so `post-commit.d/99-warn-unsigned` and `post-rewrite.d/99-warn-unsigned` will warn of missing commit signature, if you dont want this then you are welcome to delete them or add `.condition` files that exits with 1.
 
 To use `commit-msg.d/00-commitlint` to lint commit messages against [conventional commits](https://conventionalcommits.org), with configured types (and optionally scopes), create a `.commitlintrc` file at the root of your git repo:
 ```sh
