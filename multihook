@@ -87,16 +87,16 @@ format_hook() {
 	local hookname="$1"
 	local max_len="$2"
 
-	hookname=$(truncate_path "$hookname" $((max_len - 16)))
+	hookname=$(truncate_path "$hookname" $((max_len - 9)))
 
-	local dotcount=$((max_len - ${#hookname} - 13))
+	local dotcount=$((max_len - ${#hookname} - 6))
 	local dots=""
 
 	for (( i=0; i<dotcount; i++ )); do
 		dots="${dots}."
 	done
 
-	echo -n "${MAGENTA_FG}[HOOK] ${hookname}${RESET} ${dots} "
+	echo -n "${MAGENTA_FG}${hookname}${RESET} ${dots} "
 }
 
 # optional debug output by TRACE=1
@@ -118,8 +118,6 @@ HOOKDIRS+=("$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")
 HOOKDIRS+=("$GIT_DIR/hooks")
 
 HOOKNAME=$(basename "${BASH_SOURCE[0]}")
-
-echo "${CYAN_FG}[START] Running ${HOOKNAME} hooks ${RESET}"
 
 declare -A TO_RUN
 
@@ -188,20 +186,18 @@ done < <(
 	done | sort
 )
 
-echo "${CYAN_FG}[END] Summary of ${HOOKNAME} hooks ${RESET}"
-
-if [[ "${#PASSED[@]}" -gt 0 ]]; then
-	echo "${GREEN_FG}Passed: ${#PASSED[@]}${RESET}"
-fi
-
-if [[ "${#FAILED[@]}" -gt 0 ]]; then
-	echo "${RED_FG}Failed: ${#FAILED[@]}${RESET}"
-fi
-
-if [[ "${#SKIPPED[@]}" -gt 0 ]]; then
-	echo "${YELLOW_FG}Skipped: ${#SKIPPED[@]}${RESET}"
-fi
-
-echo ""
+# if [[ "${#PASSED[@]}" -gt 0 ]]; then
+# 	echo "${GREEN_FG}Passed: ${#PASSED[@]}${RESET}"
+# fi
+#
+# if [[ "${#FAILED[@]}" -gt 0 ]]; then
+# 	echo "${RED_FG}Failed: ${#FAILED[@]}${RESET}"
+# fi
+#
+# if [[ "${#SKIPPED[@]}" -gt 0 ]]; then
+# 	echo "${YELLOW_FG}Skipped: ${#SKIPPED[@]}${RESET}"
+# fi
+#
+# echo ""
 
 [[ "${#FAILED[@]}" -eq 0 ]] || exit 1
